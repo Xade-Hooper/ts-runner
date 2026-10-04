@@ -1,5 +1,8 @@
 //
 import './style.css'
+import {Player} from './game/Player'
+import {Obstacle} from './game/Obstacle'
+import {checkCollision} from './game/collision'
 const app = document.querySelector<HTMLDivElement>('#app')!
 app.innerHTML = `
     <h1> TS Runner </h1>
@@ -15,24 +18,11 @@ if (!ctx) {
 }
 
 const context: CanvasRenderingContext2D = ctx
-
-// player object and its' properties
 ctx.fillStyle = '#222'
-const player = {
-    x: 50,
-    y: 200,
-    width: 40,
-    height: 50,
-    velocityY: 0,
-    isGrounded: false,
-}
-// obstacle object and its' properties
-const obstacle = {
-    x: canvas.width,
-    y: canvas.height - 90,
-    width: 50,
-    height: 90,
-}
+// player object
+const player = new Player()
+// obstacle object 
+const obstacle = new Obstacle()
 
 
 // How to train your jump, Event listener that adds negative velocity so that the player object jumps.
@@ -42,9 +32,8 @@ window.addEventListener('keydown', (event) => {
     if (gameOver && event.code === 'Space') {
         resetGame()
     }
-    else if ( jumpPressed && player.isGrounded) {
-        player.velocityY = jumpVelocity
-        player.isGrounded= false
+    else if (jumpPressed) {
+        player.jump(jumpVelocity)
     }
 })
 // Reset Function
@@ -56,21 +45,8 @@ function resetGame() {
     player.velocityY = 0
     player.isGrounded = true
     obstacle.x = canvas.width
-    obstaclespeed = 300
+    obstacleSpeed = 300
 }
-//collision algorithim function
-function checkCollision() {
-
-    const isSeparated =
-    /*left*/ player.x + player.width <= obstacle.x ||
-    /*right*/player.x >= obstacle.x + obstacle.width ||
-    /*above*/player.y + player.height <= obstacle.y ||
-    /*below*/player.y >= obstacle.y + obstacle.height
-
-    return !isSeparated
-
-}
-
 // The function used to remove and draw the player object.
 function render() {
     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -107,30 +83,21 @@ function render() {
 }
 // 1500 pixels / second² for grav.
 const gravity = 1500
-let obstaclespeed = 300
-// The function that controls the speed for the player/obstavle object by accounting for however much real time passes between frames (deltaTime -> real time seconds),
+let obstacleSpeed = 300
+// The function that controls the speed for the player/obstacle object by accounting for however much real time passes between frames (deltaTime -> real time seconds),
 function update(deltaTime: number) {
-    player.velocityY += gravity * deltaTime
-    player.y += player.velocityY * deltaTime
+    const groundY = canvas.height - player.height
+    player.update(deltaTime, gravity, groundY)
+    obstacle.update(deltaTime, obstacleSpeed)
 
-    obstacle.x -= obstaclespeed * deltaTime
     if (obstacle.x + obstacle.width <= 0) {
         obstacle.x = canvas.width
         score += 1
-        obstaclespeed += 15
+        obstacleSpeed += 15
     }
 
-    if (checkCollision()) {
+    if (checkCollision(player, obstacle)) {
         gameOver = true
-    }
-
-    const groundY = canvas.height - player.height
-    if (player.y >= groundY) {
-        player.y = groundY
-        player.velocityY = 0
-        player.isGrounded = true
-    } else {
-        player.isGrounded = false
     }
 }
 // GAME VARIABLES
