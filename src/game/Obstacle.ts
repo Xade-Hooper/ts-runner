@@ -4,11 +4,11 @@ export class Obstacle{
     width: number
     height: number
 
-    constructor(){
-        this.x = 600
-        this.y = 200
+    constructor(groundY: number){
         this.width = 50
-        this.height = 100
+        this.height = 70 
+        this.x = 600
+        this.y = groundY - this.height
     }
 
     //physics behaviour
